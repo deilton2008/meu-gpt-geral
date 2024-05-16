@@ -1,0 +1,63 @@
+{
+  "name": "GPT-Integration",
+  "database": {
+    "url": "mongodb://localhost:27017/GPTIntegrationDB",
+    "collection": "Conversations",
+    "functions": {
+      "storeData": {
+        "method": "POST",
+        "endpoint": "/storeData",
+        "description": "Armazena dados de conversas no MongoDB",
+        "body": {
+          "input": "string",
+          "response": "string"
+        }
+      },
+      "retrieveData": {
+        "method": "GET",
+        "endpoint": "/retrieveData",
+        "description": "Recupera dados de conversas do MongoDB"
+      }
+    }
+  },
+  "api_key": "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 "
+}
+
+const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+mongoose.connect('mongodb://localhost:27017/GPTIntegrationDB', { useNewUrlParser: true, useUnifiedTopology: true });
+
+const ConversationSchema = new mongoose.Schema({
+  input: String,
+  response: String
+});
+
+const Conversation = mongoose.model('Conversation', ConversationSchema);
+
+app.post('/storeData', async (req, res) => {
+  const conversation = new Conversation(req.body);
+  try {
+    await conversation.save();
+    res.status(201).send(conversation);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+app.get('/retrieveData', async (req, res) => {
+  try {
+    const conversations = await Conversation.find({});
+    res.send(conversations);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
+});
